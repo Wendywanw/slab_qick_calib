@@ -1,62 +1,62 @@
 aliases: {soc: bf1_soc}
 device:
   qubit:
-    T1: [19.47, 11.23, 30]
-    T2e: [38.93, 22.46, 60]
-    T2r: [19.47, 6.79, 30]
-    f_ef: [3827.9248, 5302.662, 3750]
-    f_ge: [3964.852, 5506.532, 6500]
-    kappa: [-4.4271, 0.3209, 0]
+    T1: [30, 30, 30]
+    T2e: [60, 60, 60]
+    T2r: [30, 30, 30]
+    f_ef: [3800, 3800, 3800]
+    f_ge: [4000, 4000, 4000]
+    kappa: [0, 0, 0]
     low_gain: 0.003
     max_gain: 1
-    pop: [0.0054, 0.0371, 0]
+    pop: [0, 0, 0]
     pulses:
       pi_ef:
-        gain: [0.2983, 0.1225, 0.15]
-        sigma: [0.07, 0.2, 0.1]
-        sigma_inc: [5, 4, 5]
+        gain: [0.15, 0.15, 0.15]
+        sigma: [0.1, 0.1, 0.1]
+        sigma_inc: [5, 5, 5]
         type: [gauss, gauss, gauss]
       pi_ge:
-        gain: [0.2709, 0.0459, 0.15]
-        sigma: [0.07, 0.07, 0.1]
-        sigma_inc: [5, 4, 5]
-        type: [const, gauss, gauss]
+        gain: [0.15, 0.15, 0.15]
+        sigma: [0.1, 0.1, 0.1]
+        sigma_inc: [5, 5, 5]
+        type: [gauss, gauss, gauss]
     spec_gain: [1, 1, 1]
-    temp: [36.419, 80.2568, 0]
-    tuned_up: [true, false, false]
+    temp: [0, 0, 0]
+    tuned_up: [false, false, false]
   readout:
     active_reset: [false, false, false]
-    chi: [-0.767, -1.9174, 0]
-    fidelity: [0.5556, 0.0487, 0]
-    final_delay: [116.79, 67.37, 180]
-    frequency: [5379.269, 5923.5287, 6653.3975]
-    gain: [0.0522, 0.027, 0.001]
-    kappa: [0.4845, 0.4844, 0.5509]
-    lamb: [-3.0645, -8.867, -28.098]
+    chi: [0, 0, 0]
+    fidelity: [0, 0, 0]
+    final_delay: [180, 180, 180]
+    frequency: [7000, 7000, 7000]
+    gain: [0.05, 0.05, 0.05]
+    kappa: [0.5, 0.5, 0.5]
+    lamb: [0, 0, 0]
     max_gain: 1
-    phase: [101.6446, -70.0983, 0]
-    qe: [1.4067, 1.7757, 2.3549]
-    qi: [5.2701, 3.929, 2.4797]
-    readout_length: [5.4, 16.5375, 5]
-    reps: [1, 10, 50]
-    reps_base: 200
+    phase: [0, 0, 0]
+    qe: [0, 0, 0]
+    qi: [0, 0, 0]
+    readout_length: [5, 5, 5]
+    reps: [1, 1, 1]
+    reps_base: 150
     reset_e: [0, 0, 0]
     reset_g: [0, 0, 0]
-    sigma: [1.666, 0.9132, 0]
+    sigma: [0, 0, 0]
     soft_avgs: [1, 1, 1]
     soft_avgs_base: 1
-    threshold: [2.3097, 1.0285, 10]
-    tm: [0.7459, 0.5162, 0]
+    threshold: [10, 10, 10]
+    tm: [0, 0, 0]
     trig_offset: [0.5, 0.5, 0.5]
 hw:
   soc:
     adcs:
       readout:
-        ch: [1, 1, 1]
+        ch: [0, 0, 0]
     dacs:
       qubit:
-        ch: [3, 3, 3]
-        nyquist: [1, 1, 2]
+        ch: [1, 1, 1]
+        nyquist: [1, 1, 1]
         type: [full, full, full]
       readout:
         ch: [0, 0, 0]

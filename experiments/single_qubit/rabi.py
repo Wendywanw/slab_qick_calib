@@ -320,6 +320,8 @@ class RabiExperiment(QickExperiment):
         ax=None,
         show_hist=False,
         rescale=False,
+        save_fig=True,
+        return_fig=False,
         **kwargs,
     ):
         """
@@ -332,6 +334,8 @@ class RabiExperiment(QickExperiment):
             ax: Matplotlib axis to plot on
             show_hist: Whether to show histogram
             rescale: Whether to rescale the plot
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         if data is None:
@@ -361,7 +365,7 @@ class RabiExperiment(QickExperiment):
             title = title + ")"
 
         # Display the results
-        super().display(
+        return super().display(
             data=data,
             ax=ax,
             plot_all=plot_all,
@@ -372,6 +376,8 @@ class RabiExperiment(QickExperiment):
             fitfunc=self.fitfunc,
             caption_params=caption_params,
             rescale=rescale,
+            save_fig=save_fig,
+            return_fig=return_fig,
         )
 
 class ReadoutCheck(QickExperiment):
@@ -516,7 +522,7 @@ class ReadoutCheck(QickExperiment):
         # No specific analysis for ReadoutCheck, just return the data
         return data
     
-    def display(self, data=None, fit=False, plot_all=False, **kwargs):
+    def display(self, data=None, fit=False, plot_all=False, save_fig=True, return_fig=False, **kwargs):
         """
         Display the results of the ReadoutCheck experiment.
         
@@ -524,13 +530,15 @@ class ReadoutCheck(QickExperiment):
             data: Data to display (if None, use self.data)
             fit: Whether to show the fit
             plot_all: Whether to plot all data types
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         if data is None:
             data = self.data
 
         # Use the parent class display method
-        super().display(data=data, fit=fit, plot_all=plot_all, **kwargs)
+        return super().display(data=data, fit=fit, plot_all=plot_all, save_fig=save_fig, return_fig=return_fig, **kwargs)
 
 class RabiChevronExperiment(QickExperiment2DSimple):
     """
@@ -681,7 +689,7 @@ class RabiChevronExperiment(QickExperiment2DSimple):
                 
         return data
 
-    def display(self, data=None, fit=True, plot_both=False, **kwargs):
+    def display(self, data=None, fit=True, plot_both=False, save_fig=True, return_fig=False, **kwargs):
         """
         Display the results of the RabiChevronExperiment.
         
@@ -689,6 +697,8 @@ class RabiChevronExperiment(QickExperiment2DSimple):
             data: Data to display (if None, use self.data)
             fit: Whether to show the fit
             plot_both: Whether to plot both amplitude and phase
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         if data is None:
@@ -715,19 +725,21 @@ class RabiChevronExperiment(QickExperiment2DSimple):
         ylabel = "Frequency (MHz)"
 
         # Display the 2D plot
-        super().display(
+        fig = super().display(
             title=title,
             xlabel=xlabel,
             ylabel=ylabel,
             data=data,
             fit=fit,
             plot_both=plot_both,
+            save_fig=save_fig,
+            return_fig=return_fig,
             **kwargs,
         )
 
         # If fit is enabled, also display the frequency and amplitude vs. detuning
         if fit: 
-            fig, ax = plt.subplots(2, 1, figsize=(6, 6))
+            fig2, ax = plt.subplots(2, 1, figsize=(6, 6))
             qubit_freq = self.cfg.device.qubit.f_ge[self.cfg.expt.qubit[0]]
             freq = [data["fit_avgi"][i][1] for i in range(len(data["ypts"]))]
             amp = [data["fit_avgi"][i][0] for i in range(len(data["ypts"]))]
@@ -740,6 +752,25 @@ class RabiChevronExperiment(QickExperiment2DSimple):
             ax[1].plot(data["ypts"]-qubit_freq, amp)
             ax[1].set_xlabel('$\Delta$ Frequency (MHz)')
             ax[1].set_ylabel('Amplitude')
+            
+            # Save or return the second figure if requested
+            if save_fig:
+                fig2.savefig(self.fname[0:-3] + "_chevron.png")
+            
+            if return_fig:
+                import io
+                import base64
+                image_buffer = io.BytesIO()
+                fig2.savefig(image_buffer, format='png', bbox_inches='tight')
+                image_buffer.seek(0)
+                image_bytes = image_buffer.getvalue()
+                image_buffer.close()
+                chevron_base64 = base64.b64encode(image_bytes).decode('utf-8')
+                return [fig, chevron_base64]
+            
+            plt.show()
+            
+        return fig
 
 # Helper functions for fitting the chevron pattern
 

@@ -9,6 +9,8 @@ import slab_qick_calib.calib.readout_helpers as helpers
 import time
 from scipy.optimize import curve_fit
 from pathlib import Path
+import io
+import base64
 
 
 """
@@ -269,6 +271,8 @@ class QickExperiment(Experiment):
         fitfunc=None,
         caption_params=[],
         debug=False,
+        return_fig=True,
+        save_fig=True,
         **kwargs,
     ):
         """
@@ -293,6 +297,8 @@ class QickExperiment(Experiment):
             fitfunc: Function used for fitting
             caption_params: List of parameters to display in the legend
             debug: Whether to show debug information (initial guess)
+            return_fig: Whether to return the figure as base64 string
+            save_fig: Whether to save the figure to disk
             **kwargs: Additional arguments for plotting
         """
         if data is None:
@@ -300,9 +306,9 @@ class QickExperiment(Experiment):
 
         # Determine whether to save the figure
         if ax is None:
-            save_fig = True
+            savefig = True
         else:
-            save_fig = False
+            savefig = False
 
         # Configure plot layout based on what to display
         if plot_all:
@@ -389,13 +395,27 @@ class QickExperiment(Experiment):
             ax.set_ylabel("Probability")
 
         # Save figure if created in this method
-        if save_fig:
-            imname = self.fname.split("\\")[-1]
+        if savefig:
             fig.tight_layout()
-            fig.savefig(
-                self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png"
-            )
-            plt.show()
+            
+            # Save figure to disk if requested
+            if save_fig:
+                imname = self.fname.split("\\")[-1]
+                fig.savefig(
+                    self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png"
+                )
+            
+            # Return figure as base64 string if requested
+            if return_fig:
+                image_buffer = io.BytesIO()
+                fig.savefig(image_buffer, format='png', bbox_inches='tight')
+                image_buffer.seek(0)
+                image_bytes = image_buffer.getvalue()
+                image_buffer.close()
+                base64_encoded_string = base64.b64encode(image_bytes).decode('utf-8')
+                return base64_encoded_string
+            else:
+                plt.show()
 
     def make_hist(self, prog, single=True):
         """
@@ -933,6 +953,8 @@ class QickExperiment2D(QickExperimentLoop):
         title="",
         xlabel="",
         ylabel="",
+        save_fig=True,
+        return_fig=False,
         **kwargs,
     ):
         """
@@ -952,6 +974,8 @@ class QickExperiment2D(QickExperimentLoop):
             title: Plot title
             xlabel: X-axis label
             ylabel: Y-axis label
+            save_fig: Whether to save the figure to disk
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for plotting
         """
         if data is None:
@@ -1008,20 +1032,29 @@ class QickExperiment2D(QickExperimentLoop):
         # Save figure if created in this method
         if savefig:
             fig.tight_layout()
-
-            file_path = Path(self.fname)
-    
-            # Get the parent directory
-            parent_dir = file_path.parent
             
-            # Get the filename and change its extension to .png
-            new_filename = file_path.name.rsplit('.', 1)[0] + '.png'
-            # Create the full output path and save the figure
-            output_path = parent_dir / 'images' / new_filename
-
-
-            fig.savefig(output_path)
-            plt.show()
+            # Save figure to disk if requested
+            if save_fig:
+                file_path = Path(self.fname)
+                # Get the parent directory
+                parent_dir = file_path.parent
+                # Get the filename and change its extension to .png
+                new_filename = file_path.name.rsplit('.', 1)[0] + '.png'
+                # Create the full output path and save the figure
+                output_path = parent_dir / 'images' / new_filename
+                fig.savefig(output_path)
+            
+            # Return figure as base64 string if requested
+            if return_fig:
+                image_buffer = io.BytesIO()
+                fig.savefig(image_buffer, format='png', bbox_inches='tight')
+                image_buffer.seek(0)
+                image_bytes = image_buffer.getvalue()
+                image_buffer.close()
+                base64_encoded_string = base64.b64encode(image_bytes).decode('utf-8')
+                return base64_encoded_string
+            else:
+                plt.show()
 
 
 class QickExperiment2DSimple(QickExperiment2D):
@@ -1165,6 +1198,8 @@ class QickExperiment2DSweep(QickExperiment):
         title="",
         xlabel="",
         ylabel="",
+        save_fig=True,
+        return_fig=False,
         **kwargs,
     ):
         """
@@ -1184,6 +1219,8 @@ class QickExperiment2DSweep(QickExperiment):
             title: Plot title
             xlabel: X-axis label
             ylabel: Y-axis label
+            save_fig: Whether to save the figure to disk
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for plotting
         """
         if data is None:
@@ -1240,17 +1277,26 @@ class QickExperiment2DSweep(QickExperiment):
         # Save figure if created in this method
         if savefig:
             fig.tight_layout()
-
-            file_path = Path(self.fname)
-    
-            # Get the parent directory
-            parent_dir = file_path.parent
             
-            # Get the filename and change its extension to .png
-            new_filename = file_path.name.rsplit('.', 1)[0] + '.png'
-            # Create the full output path and save the figure
-            output_path = parent_dir / 'images' / new_filename
-
-
-            fig.savefig(output_path)
-            plt.show()
+            # Save figure to disk if requested
+            if save_fig:
+                file_path = Path(self.fname)
+                # Get the parent directory
+                parent_dir = file_path.parent
+                # Get the filename and change its extension to .png
+                new_filename = file_path.name.rsplit('.', 1)[0] + '.png'
+                # Create the full output path and save the figure
+                output_path = parent_dir / 'images' / new_filename
+                fig.savefig(output_path)
+            
+            # Return figure as base64 string if requested
+            if return_fig:
+                image_buffer = io.BytesIO()
+                fig.savefig(image_buffer, format='png', bbox_inches='tight')
+                image_buffer.seek(0)
+                image_bytes = image_buffer.getvalue()
+                image_buffer.close()
+                base64_encoded_string = base64.b64encode(image_bytes).decode('utf-8')
+                return base64_encoded_string
+            else:
+                plt.show()

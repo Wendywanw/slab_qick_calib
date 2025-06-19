@@ -1,5 +1,10 @@
 import numpy as np
+
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+import io
+import base64
 
 from qick import *
 from exp_handling.datamanagement import AttrDict
@@ -122,6 +127,7 @@ class ToFCalibrationExperiment(QickExperiment):
         qi=0,
         params={},
         go=True,
+        display = True,
     ):
         """
         Initialize the ToF calibration experiment.
@@ -165,7 +171,8 @@ class ToFCalibrationExperiment(QickExperiment):
         # Run the experiment if go is True
         if go:
             self.go(analyze=False, display=False, progress=True, save=True)
-            self.display(adc_trig_offset=self.cfg.expt.trig_offset)
+            if display:
+                self.display(adc_trig_offset=self.cfg.expt.trig_offset, )
 
     def acquire(self, progress=False):
         """
@@ -236,7 +243,7 @@ class ToFCalibrationExperiment(QickExperiment):
             data = self.data
         return data
 
-    def display(self, data=None, adc_trig_offset=0, save_fig=True, **kwargs):
+    def display(self, data=None, adc_trig_offset=0, save_fig=True, return_fig=False, **kwargs):
         """
         Display the results of the ToF calibration.
         
@@ -260,14 +267,14 @@ class ToFCalibrationExperiment(QickExperiment):
         # Create figure and plot I/Q data
         fig, ax = plt.subplots(1, 1, figsize=(8, 3))
         ax.set_title(f"Time of Flight: DAC Ch. {dac_ch} to ADC Ch. {adc_ch}, f: {self.cfg.expt.frequency} MHz")
-        ax.set_xlabel("Time ($\mu$s)")
+        ax.set_xlabel(r"Time ($\mu$s)")
         ax.set_ylabel("Transmission (ADC units)")
 
         plt.plot(data["xpts"], data["i"], label="I")
         plt.plot(data["xpts"], data["q"], label="Q")
         plt.axvline(adc_trig_offset, c="k", ls="--")
         plt.legend()
-        plt.show()
+        
 
         # Save figure if requested
         if save_fig:
@@ -276,7 +283,17 @@ class ToFCalibrationExperiment(QickExperiment):
             fig.savefig(
                 self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png"
             )
+        if return_fig:
+            image_buffer = io.BytesIO()
+            fig.savefig(image_buffer, format='png', bbox_inches='tight') # Save as PNG
+            image_buffer.seek(0)  # Rewind the buffer to the beginning
+            image_bytes = image_buffer.getvalue()
+            image_buffer.close()
 
+            base64_encoded_string = base64.b64encode(image_bytes).decode('utf-8')
+            return base64_encoded_string
+        else: 
+            plt.show()
 
 class ToF2D(QickExperiment2DSimple):
     """

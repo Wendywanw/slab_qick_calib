@@ -301,6 +301,8 @@ class T1Experiment(QickExperiment):
         ax=None,
         show_hist=False,
         rescale=False,
+        save_fig=True,
+        return_fig=False,
         **kwargs,
     ):
         """
@@ -315,6 +317,8 @@ class T1Experiment(QickExperiment):
             ax: matplotlib axis to plot on, default is to create one
             show_hist: Whether to show histogram of the data
             rescale: Whether to rescale data based on histogram, from 0->1
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments passed to the display function
         """
         # Get qubit index for plot title
@@ -329,7 +333,7 @@ class T1Experiment(QickExperiment):
         fitfunc = fitter.expfunc
 
         # Call parent class display method
-        super().display(
+        return super().display(
             data=data,
             ax=ax,
             plot_all=plot_all,
@@ -340,6 +344,9 @@ class T1Experiment(QickExperiment):
             fitfunc=self.fitfunc,
             caption_params=caption_params,
             rescale=rescale,
+            save_fig=save_fig,
+            return_fig=return_fig,
+            **kwargs,
         )
 
     def update(self, cfg_file, rng_vals=[1,500],first_time=False, verbose=True):
@@ -457,7 +464,7 @@ class T1_2D(QickExperiment2DSimple):
         fitterfunc = fitter.fitexp
         super().analyze(fitfunc, fitterfunc, data)
 
-    def display(self, data=None, fit=True, ax=None, **kwargs):
+    def display(self, data=None, fit=True, ax=None, save_fig=True, return_fig=False, **kwargs):
         """
         Display 2D T1 measurement results
 
@@ -467,6 +474,8 @@ class T1_2D(QickExperiment2DSimple):
             data: Data dictionary to display (uses self.data if None)
             fit: Whether to show fit results
             ax: Matplotlib axis to plot on
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments passed to the display function
         """
         if data is None:
@@ -478,13 +487,15 @@ class T1_2D(QickExperiment2DSimple):
         ylabel = "Time (s)"
 
         # Call parent class display method
-        super().display(
+        return super().display(
             data=data,
             ax=ax,
             title=title,
             xlabel=xlabel,
             ylabel=ylabel,
             fit=fit,
+            save_fig=save_fig,
+            return_fig=return_fig,
             **kwargs,
         )
 

@@ -20,6 +20,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import copy
 from datetime import datetime
+import io
+import base64
 
 from qick import *
 from qick.asm_v2 import QickSweep1D
@@ -214,6 +216,7 @@ class ResSpec(QickExperiment):
             go: Whether to run the experiment immediately
             params: Additional parameters to override defaults
             style: Style of experiment ('coarse' or 'fine')
+            print: Whether to print configuration
         """
         # Determine qubit state for filename
         state = None
@@ -503,6 +506,8 @@ class ResSpec(QickExperiment):
         debug=False,
         ax=None,
         plot_res=True,
+        save_fig=True,
+        return_fig=False,
         **kwargs,
     ):
         """
@@ -516,6 +521,8 @@ class ResSpec(QickExperiment):
             debug: Whether to show debug information
             ax: Matplotlib axes to plot on
             plot_res: Whether to plot the current resonator frequency
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         if data is None:
@@ -541,6 +548,7 @@ class ResSpec(QickExperiment):
         # Plot amplitude data
         ax[0].set_ylabel("Amps (ADC units)")
         ax[0].plot(data["freq"][1:-1], data["amps"][1:-1], ".-")
+        ax[0].set_xlim(min(data["freq"]), max(data["freq"]))
         
         # Plot fit if requested
         if fit:
@@ -593,12 +601,23 @@ class ResSpec(QickExperiment):
             
             # Finalize and save
             fig.tight_layout()
-            plt.show()
-            imname = self.fname.split("\\")[-1]
-            fig.savefig(
-                self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png"
-            )
-        
+            
+            if save_fig:
+                imname = self.fname.split("\\")[-1]
+                fig.savefig(
+                    self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png"
+                )
+            
+            if return_fig:
+                image_buffer = io.BytesIO()
+                fig.savefig(image_buffer, format='png', bbox_inches='tight')
+                image_buffer.seek(0)
+                image_bytes = image_buffer.getvalue()
+                image_buffer.close()
+                base64_encoded_string = base64.b64encode(image_bytes).decode('utf-8')
+                return base64_encoded_string
+            else:
+                plt.show()
 
     def update(self, cfg_file, freq=True, fast=False, verbose=True):
         """
@@ -808,13 +827,15 @@ class ResSpecPower(QickExperiment2DSimple):
 
         return data
 
-    def display(self, data=None, fit=True, **kwargs):
+    def display(self, data=None, fit=True, save_fig=True, return_fig=False, **kwargs):
         """
         Display the results of the power sweep experiment.
         
         Args:
             data: Data to display (if None, use self.data)
             fit: Whether to show the fit results
+            save_fig: Whether to save the figure
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         data = self.data if data is None else data
@@ -832,6 +853,7 @@ class ResSpecPower(QickExperiment2DSimple):
         # Create figure and plot 2D data
         fig, ax = plt.subplots(1, 1, figsize=(10, 8))
         plt.pcolormesh(x_sweep, y_sweep, amps, cmap="viridis", shading="auto")
+        plt.xlim(min(x_sweep), max(x_sweep))
         
         # Use logarithmic y-axis if requested
         if self.cfg.expt.get('log', False):
@@ -864,11 +886,23 @@ class ResSpecPower(QickExperiment2DSimple):
         # Configure tick parameters and show plot
         ax.tick_params(top=True, bottom=True, right=True)
         plt.tight_layout()
-        plt.show()
         
-        # Save figure
-        imname = self.fname.split("\\")[-1]
-        fig.savefig(self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png")
+        # Save figure if requested
+        if save_fig:
+            imname = self.fname.split("\\")[-1]
+            fig.savefig(self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + ".png")
+        
+        # Return figure as base64 string if requested
+        if return_fig:
+            image_buffer = io.BytesIO()
+            fig.savefig(image_buffer, format='png', bbox_inches='tight')
+            image_buffer.seek(0)
+            image_bytes = image_buffer.getvalue()
+            image_buffer.close()
+            base64_encoded_string = base64.b64encode(image_bytes).decode('utf-8')
+            return base64_encoded_string
+        else:
+            plt.show()
 
 class ResSpec2D(QickExperiment2DSimple):
     """

@@ -460,6 +460,8 @@ class T2Experiment(QickExperiment):
         savefig=True,
         refit=False,
         show_hist=False,
+        save_fig=True,
+        return_fig=False,
         **kwargs,
     ):
         """
@@ -474,9 +476,11 @@ class T2Experiment(QickExperiment):
             debug: Whether to show debug information
             plot_all: Whether to make plots for I/Q/Amps or just I
             ax: Matplotlib axis to plot on (creates one if None)
-            savefig: Whether to save the figure to disk
+            savefig: Whether to save the figure to disk (deprecated, use save_fig)
             refit: Whether to use refit data for display
             show_hist: Whether to show histogram of the data
+            save_fig: Whether to save the figure to disk
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments passed to the display function
         """
         if data is None:
@@ -515,8 +519,8 @@ class T2Experiment(QickExperiment):
                 {"index": 1, "format": "Freq. : {val:.3} $\pm$ {err:.1} MHz"},
             ]
 
-        # Call parent class display method
-        super().display(
+        # Call parent class display method and return its result
+        return super().display(
             data=data,
             ax=ax,
             plot_all=plot_all,
@@ -527,5 +531,7 @@ class T2Experiment(QickExperiment):
             show_hist=show_hist,
             fitfunc=self.fitfunc,
             caption_params=caption_params,
-            savefig=savefig,
+            save_fig=save_fig,
+            return_fig=return_fig,
+            **kwargs
         )

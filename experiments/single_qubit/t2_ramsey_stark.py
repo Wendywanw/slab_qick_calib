@@ -105,7 +105,7 @@ class RamseyStarkExperiment(QickExperiment):
         return self.data
 
     def display(
-        self, data=None, fit=True, debug=False, plot_all=False, ax=None, show_hist=True, **kwargs
+        self, data=None, fit=True, debug=False, plot_all=False, ax=None, show_hist=True, save_fig=True, return_fig=False, **kwargs
     ):
         qubit = self.cfg.expt.qubit[0]
         df = self.cfg.expt.stark_freq - self.cfg.device.qubit.f_ge[qubit]
@@ -121,7 +121,7 @@ class RamseyStarkExperiment(QickExperiment):
             {"index": 1, "format": "Freq. : {val:.3} $\pm$ {err:.1} MHz"},        
         ]
         
-        super().display(
+        return super().display(
             data=data,
             ax=ax,
             plot_all=plot_all,
@@ -131,9 +131,10 @@ class RamseyStarkExperiment(QickExperiment):
             show_hist=show_hist,
             fitfunc=fitfunc,
             caption_params=caption_params,
+            save_fig=save_fig,
+            return_fig=return_fig,
+            **kwargs
         )
-
-        return data
 
 class RamseyStarkPowerExperiment(QickExperiment2DSimple):
     """
@@ -215,7 +216,7 @@ class RamseyStarkPowerExperiment(QickExperiment2DSimple):
         popt, pcov = curve_fit(quad_fit, data["stark_gain_pts"], freq)
         data["quad_fit"] = popt
 
-    def display(self, data=None, fit=True, plot_both=False, **kwargs):
+    def display(self, data=None, fit=True, plot_both=False, save_fig=True, return_fig=False, **kwargs):
         if data is None:
             data = self.data
         qubit = self.cfg.expt.qubit[0]
@@ -224,9 +225,11 @@ class RamseyStarkPowerExperiment(QickExperiment2DSimple):
         title = f"Stark Power Ramsey Q{qubit} Freq: {df}"
         ylabel = "Gain [DAC units]"
         xlabel = "Wait Time ($\mu$s)"
-        super().display(plot_both=False, title=title, xlabel=xlabel, ylabel=ylabel)
-
         
+        # Get the main plot from superclass
+        main_fig = super().display(plot_both=False, title=title, xlabel=xlabel, ylabel=ylabel, save_fig=False, return_fig=True)
+        
+        # Create additional plots
         fig, ax = plt.subplots(1, 1, figsize=(6, 4))
         ax = [ax]
         if fit:
@@ -242,21 +245,53 @@ class RamseyStarkPowerExperiment(QickExperiment2DSimple):
             ax[0].set_ylabel("Frequency [MHz]")
             ax[0].legend()
             ax[0].set_title(f"Stark Power Ramsey Q{qubit} Freq: {df}")
-            # print(f'Quadratic Fit: {data['quad_fit'][0]:.3g}x^2 + {data['quad_fit'][1]:.3g}x + {data['quad_fit'][2]:.3g}')
 
         # Plot raw data
         fig3, ax = plt.subplots(1, 1, figsize=(6, 8))
         off = 0 
         for i in range(len(data['stark_gain_pts'])):
-            
-            ax.plot(data['xpts'], data['avgi'][i]+off)#, label=f'Gain {data['stark_gain_pts'][i]}')
+            ax.plot(data['xpts'], data['avgi'][i]+off)
             off += 2*data['fit_avgi'][i][0]
 
-        imname = self.fname.split("\\")[-1]
-        fig.savefig(
-            self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + "quad_fit.png"
-        )
-        plt.show()
+        # Save figures if requested
+        if save_fig:
+            imname = self.fname.split("\\")[-1]
+            fig.savefig(
+                self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + "quad_fit.png"
+            )
+            fig3.savefig(
+                self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + "raw_data.png"
+            )
+
+        # Return figures as base64 if requested
+        if return_fig:
+            import io
+            import base64
+            
+            # Convert main figure to base64
+            main_buffer = io.BytesIO()
+            plt.figure(main_fig).savefig(main_buffer, format='png', bbox_inches='tight')
+            main_buffer.seek(0)
+            main_base64 = base64.b64encode(main_buffer.getvalue()).decode('utf-8')
+            main_buffer.close()
+            
+            # Convert quad fit figure to base64
+            quad_buffer = io.BytesIO()
+            fig.savefig(quad_buffer, format='png', bbox_inches='tight')
+            quad_buffer.seek(0)
+            quad_base64 = base64.b64encode(quad_buffer.getvalue()).decode('utf-8')
+            quad_buffer.close()
+            
+            # Convert raw data figure to base64
+            raw_buffer = io.BytesIO()
+            fig3.savefig(raw_buffer, format='png', bbox_inches='tight')
+            raw_buffer.seek(0)
+            raw_base64 = base64.b64encode(raw_buffer.getvalue()).decode('utf-8')
+            raw_buffer.close()
+            
+            return [main_base64, quad_base64, raw_base64]
+        else:
+            plt.show()
 
 class RamseyStarkFreqExperiment(QickExperiment2DSimple):
     """
@@ -335,7 +370,7 @@ class RamseyStarkFreqExperiment(QickExperiment2DSimple):
         super().analyze(fitfunc=fitter.sinfunc, fitterfunc=fitterfunc, data=data)
         self.data['freq'] = [data["fit_avgi"][i][1] for i in range(len(data["ypts"]))]
 
-    def display(self, data=None, fit=True, plot_both=False, **kwargs):
+    def display(self, data=None, fit=True, plot_both=False, save_fig=True, return_fig=False, **kwargs):
         if data is None:
             data = self.data
         qubit = self.cfg.expt.qubit[0]
@@ -344,9 +379,11 @@ class RamseyStarkFreqExperiment(QickExperiment2DSimple):
         title = f"Stark Freq Ramsey Q{qubit} Gain: {gain}"
         ylabel = "Frequency (MHz)"
         xlabel = "Wait Time ($\mu$s)"
-        super().display(plot_both=False, title=title, xlabel=xlabel, ylabel=ylabel)
-
         
+        # Get the main plot from superclass
+        main_fig = super().display(plot_both=False, title=title, xlabel=xlabel, ylabel=ylabel, save_fig=False, return_fig=True)
+        
+        # Create additional plots
         fig, ax = plt.subplots(1, 1, figsize=(6, 4))
         ax = [ax]
         if fit:
@@ -363,15 +400,48 @@ class RamseyStarkFreqExperiment(QickExperiment2DSimple):
         fig3, ax = plt.subplots(1, 1, figsize=(6, 8))
         off = 0 
         for i in range(len(data['ypts'])):
-            
-            ax.plot(data['xpts'], data['avgi'][i]+off)#, label=f'Gain {data['stark_gain_pts'][i]}')
+            ax.plot(data['xpts'], data['avgi'][i]+off)
             off += 2*data['fit_avgi'][i][0]
 
-        # imname = self.fname.split("\\")[-1]
-        # fig.savefig(
-        #     self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + "quad_fit.png"
-        # )
-        # plt.show()
+        # Save figures if requested
+        if save_fig:
+            imname = self.fname.split("\\")[-1]
+            fig.savefig(
+                self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + "freq_fit.png"
+            )
+            fig3.savefig(
+                self.fname[0 : -len(imname)] + "images\\" + imname[0:-3] + "raw_data.png"
+            )
+
+        # Return figures as base64 if requested
+        if return_fig:
+            import io
+            import base64
+            
+            # Convert main figure to base64
+            main_buffer = io.BytesIO()
+            plt.figure(main_fig).savefig(main_buffer, format='png', bbox_inches='tight')
+            main_buffer.seek(0)
+            main_base64 = base64.b64encode(main_buffer.getvalue()).decode('utf-8')
+            main_buffer.close()
+            
+            # Convert freq fit figure to base64
+            freq_buffer = io.BytesIO()
+            fig.savefig(freq_buffer, format='png', bbox_inches='tight')
+            freq_buffer.seek(0)
+            freq_base64 = base64.b64encode(freq_buffer.getvalue()).decode('utf-8')
+            freq_buffer.close()
+            
+            # Convert raw data figure to base64
+            raw_buffer = io.BytesIO()
+            fig3.savefig(raw_buffer, format='png', bbox_inches='tight')
+            raw_buffer.seek(0)
+            raw_base64 = base64.b64encode(raw_buffer.getvalue()).decode('utf-8')
+            raw_buffer.close()
+            
+            return [main_base64, freq_base64, raw_base64]
+        else:
+            plt.show()
 
 
 def quad_fit(x, a, b, c):

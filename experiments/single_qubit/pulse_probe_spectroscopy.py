@@ -17,6 +17,9 @@ the qubit spectrum as a function of probe power.
 
 import numpy as np
 from qick import *
+import io
+import base64
+import matplotlib.pyplot as plt
 
 from exp_handling.datamanagement import AttrDict
 from gen.qick_experiment import QickExperiment, QickExperiment2DSimple
@@ -313,7 +316,7 @@ class QubitSpec(QickExperiment):
         return self.data
 
     def display(
-        self, fit=True, ax=None, plot_all=True, **kwargs
+        self, fit=True, ax=None, plot_all=True, save_fig=True, return_fig=True, **kwargs
     ):
         """
         Display the results of the pulse probe spectroscopy experiment.
@@ -322,6 +325,8 @@ class QubitSpec(QickExperiment):
             fit: Whether to show the fit curve
             ax: Matplotlib axis to plot on
             plot_all: Whether to plot all data types
+            save_fig: Whether to save the figure to disk
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         # Set up fit function and labels
@@ -341,7 +346,7 @@ class QubitSpec(QickExperiment):
         ]
 
         # Display the results
-        super().display(
+        fig = super().display(
             ax=ax,
             plot_all=plot_all,
             title=title,
@@ -349,8 +354,12 @@ class QubitSpec(QickExperiment):
             fit=fit,
             show_hist=False,
             fitfunc=fitfunc,
-            caption_params=caption_params,  # Pass the new structured parameter list
+            caption_params=caption_params,
+            save_fig=save_fig,
+            return_fig=return_fig,
+            **kwargs
         )
+        return fig
 
 class QubitSpecPower(QickExperiment2DSimple):
     """
@@ -514,7 +523,7 @@ class QubitSpecPower(QickExperiment2DSimple):
 
         return self.data
 
-    def display(self, data=None, fit=True, plot_amps=True, ax=None, **kwargs):
+    def display(self, data=None, fit=True, plot_amps=True, ax=None, save_fig=True, return_fig=False, **kwargs):
         """
         Display the results of the 2D pulse probe spectroscopy experiment.
         
@@ -526,6 +535,8 @@ class QubitSpecPower(QickExperiment2DSimple):
             fit: Whether to show the fit
             plot_amps: Whether to plot amplitude data (vs. phase)
             ax: Matplotlib axis to plot on
+            save_fig: Whether to save the figure to disk
+            return_fig: Whether to return the figure as base64 string
             **kwargs: Additional arguments for the display
         """
         # Set up plot title
@@ -538,7 +549,7 @@ class QubitSpecPower(QickExperiment2DSimple):
         ylabel = "Qubit Gain (DAC level)"
 
         # Display the 2D plot
-        super().display(
+        return super().display(
             data=data,
             ax=ax,
             plot_amps=plot_amps,
@@ -546,5 +557,7 @@ class QubitSpecPower(QickExperiment2DSimple):
             xlabel=xlabel,
             ylabel=ylabel,
             fit=fit,
-            **kwargs,
+            save_fig=save_fig,
+            return_fig=return_fig,
+            **kwargs
         )
